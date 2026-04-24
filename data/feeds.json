@@ -1,0 +1,92 @@
+{
+  "feeds": [
+    {
+      "id": "krebs",
+      "name": "Krebs on Security",
+      "url": "https://krebsonsecurity.com/feed/",
+      "category": "Threat Intelligence",
+      "logo": "https://krebsonsecurity.com/favicon.ico",
+      "enabled": true
+    },
+    {
+      "id": "hackernews",
+      "name": "The Hacker News",
+      "url": "https://feeds.feedburner.com/TheHackersNews",
+      "category": "Threat Intelligence",
+      "logo": "https://thehackernews.com/favicon.ico",
+      "enabled": true
+    },
+    {
+      "id": "darkreading",
+      "name": "Dark Reading",
+      "url": "https://www.darkreading.com/rss.xml",
+      "category": "General Cyber News",
+      "logo": "https://www.darkreading.com/favicon.ico",
+      "enabled": true
+    },
+    {
+      "id": "bleeping",
+      "name": "BleepingComputer",
+      "url": "https://www.bleepingcomputer.com/feed/",
+      "category": "General Cyber News",
+      "logo": "https://www.bleepingcomputer.com/favicon.ico",
+      "enabled": true
+    },
+    {
+      "id": "cisa",
+      "name": "CISA Alerts",
+      "url": "https://www.cisa.gov/cybersecurity-advisories/cybersecurity-advisories.xml",
+      "category": "Government Alerts",
+      "logo": "https://www.cisa.gov/favicon.ico",
+      "enabled": true
+    },
+    {
+      "id": "schneier",
+      "name": "Schneier on Security",
+      "url": "https://www.schneier.com/feed/atom",
+      "category": "Threat Intelligence",
+      "logo": "https://www.schneier.com/favicon.ico",
+      "enabled": true
+    },
+    {
+      "id": "threatpost",
+      "name": "Threatpost",
+      "url": "https://threatpost.com/feed/",
+      "category": "Malware",
+      "logo": "https://threatpost.com/favicon.ico",
+      "enabled": true
+    },
+    {
+      "id": "nvd",
+      "name": "NVD - CVEs",
+      "url": "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss.xml",
+      "category": "Vulnerabilities",
+      "logo": "https://nvd.nist.gov/favicon.ico",
+      "enabled": true
+    },
+    {
+      "id": "portswigger",
+      "name": "PortSwigger Research",
+      "url": "https://portswigger.net/research/rss",
+      "category": "Vulnerabilities",
+      "logo": "https://portswigger.net/favicon.ico",
+      "enabled": true
+    },
+    {
+      "id": "cyberscoop",
+      "name": "CyberScoop",
+      "url": "https://cyberscoop.com/feed/",
+      "category": "General Cyber News",
+      "logo": "https://cyberscoop.com/favicon.ico",
+      "enabled": true
+    }
+  ],
+  "categories": [
+    "All Feeds",
+    "Threat Intelligence",
+    "Malware",
+    "Vulnerabilities",
+    "Government Alerts",
+    "General Cyber News"
+  ]
+}
