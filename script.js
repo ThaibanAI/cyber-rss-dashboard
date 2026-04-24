@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   BOOKMARKS: 'cyber-rss-bookmarks',
   READ_LATER: 'cyber-rss-readlater',
   CACHE: 'cyber-rss-cache',
+  API_KEY: 'cyber-rss-apikey',
 };
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const AUTO_REFRESH_MS = 10 * 60 * 1000; // 10 minutes
@@ -44,6 +45,12 @@ const els = {
   lastUpdated: $('#lastUpdated'),
   feedAlerts: $('#feedAlerts'),
   footerYear: $('#footerYear'),
+  apiKeyToggle: $('#apiKeyToggle'),
+  apiKeyPanel: $('#apiKeyPanel'),
+  apiKeyInput: $('#apiKeyInput'),
+  apiKeyVis: $('#apiKeyVis'),
+  apiKeySave: $('#apiKeySave'),
+  apiKeyClear: $('#apiKeyClear'),
 };
 
 // ============================================================
@@ -63,6 +70,9 @@ async function init() {
   // Build UI
   renderCategoryFilters();
   renderSourceOptions();
+
+  // Load API key from storage
+  initApiKey();
 
   // Load feeds
   await loadFeeds();
@@ -103,6 +113,56 @@ function toggleTheme() {
 function updateThemeIcon(theme) {
   const icon = els.themeToggle.querySelector('i');
   icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+}
+
+// ============================================================
+// API KEY CONFIG
+// ============================================================
+
+function initApiKey() {
+  const savedKey = getApiKey();
+  if (els.apiKeyInput) {
+    els.apiKeyInput.value = savedKey || '';
+  }
+}
+
+function getApiKey() {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.API_KEY) || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function saveApiKey(key) {
+  try {
+    if (key && key.trim()) {
+      localStorage.setItem(STORAGE_KEYS.API_KEY, key.trim());
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.API_KEY);
+    }
+  } catch (e) {
+    // ignore
+  }
+  clearCache();
+}
+
+function clearApiKey() {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.API_KEY);
+  } catch (e) {
+    // ignore
+  }
+  if (els.apiKeyInput) els.apiKeyInput.value = '';
+  clearCache();
+}
+
+function clearCache() {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.CACHE);
+  } catch (e) {
+    // ignore
+  }
 }
 
 // ============================================================
@@ -226,24 +286,36 @@ async function loadFeeds() {
 }
 
 async function fetchFeed(feed) {
-  const params = new URLSearchParams({ rss_url: feed.url, count: 20 });
+  const savedKey = getApiKey();
+  const params = new URLSearchParams({ rss_url: feed.url });
+  if (savedKey) {
+    params.set('api_key', savedKey);
+    params.set('count', '20');
+  }
   const url = `${RSS_API}?${params}`;
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
 
-  const data = await res.json();
-  if (data.status !== 'ok') throw new Error('API error: ' + (data.message || 'unknown'));
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-  return (data.items || []).map(item => ({
-    title: item.title || 'Untitled',
-    link: item.link || '#',
-    pubDate: item.pubDate || new Date().toISOString(),
-    description: stripHtml(item.description || item.content || ''),
-    thumbnail: item.enclosure?.link || item.thumbnail || item.media?.thumbnail?.[0]?.url || '',
-    author: item.author || '',
-    categories: item.categories || [],
-  }));
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error('API error: ' + (data.message || 'unknown'));
+
+    return (data.items || []).map(item => ({
+      title: item.title || 'Untitled',
+      link: item.link || '#',
+      pubDate: item.pubDate || new Date().toISOString(),
+      description: stripHtml(item.description || item.content || ''),
+      thumbnail: item.enclosure?.link || item.thumbnail || '',
+      author: item.author || '',
+      categories: item.categories || [],
+    })).filter(item => item.title !== 'Untitled' || item.link !== '#');
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function stripHtml(html) {
@@ -437,6 +509,60 @@ function attachEventListeners() {
 
   // Refresh
   els.refreshBtn.addEventListener('click', loadFeeds);
+
+  // API Key panel toggle
+  els.apiKeyToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = els.apiKeyPanel.style.display !== 'none';
+    els.apiKeyPanel.style.display = isOpen ? 'none' : 'flex';
+    els.apiKeyToggle.classList.toggle('active');
+    if (!isOpen) els.apiKeyInput.focus();
+  });
+
+  // Close API key panel when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.api-key-wrapper')) {
+      els.apiKeyPanel.style.display = 'none';
+      els.apiKeyToggle.classList.remove('active');
+    }
+  });
+
+  // API key visibility toggle
+  els.apiKeyVis.addEventListener('click', () => {
+    const input = els.apiKeyInput;
+    const icon = els.apiKeyVis.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'fas fa-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'fas fa-eye';
+    }
+  });
+
+  // API key save
+  els.apiKeySave.addEventListener('click', () => {
+    saveApiKey(els.apiKeyInput.value);
+    els.apiKeyPanel.style.display = 'none';
+    els.apiKeyToggle.classList.remove('active');
+    loadFeeds();
+  });
+
+  // API key clear
+  els.apiKeyClear.addEventListener('click', () => {
+    clearApiKey();
+    els.apiKeyPanel.style.display = 'none';
+    els.apiKeyToggle.classList.remove('active');
+    loadFeeds();
+  });
+
+  // Enter key saves API key
+  els.apiKeyInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      els.apiKeySave.click();
+    }
+  });
 
   // Category filters (event delegation)
   els.categoryFilters.addEventListener('click', (e) => {

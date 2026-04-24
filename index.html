@@ -56,6 +56,29 @@
             </select>
           </div>
         </div>
+        <div class="settings-row">
+          <div class="api-key-wrapper">
+            <span class="api-key-toggle-btn" id="apiKeyToggle">
+              <i class="fas fa-key"></i> API Key
+            </span>
+            <div class="api-key-panel" id="apiKeyPanel" style="display:none;">
+              <div class="api-key-field">
+                <input type="password" id="apiKeyInput" class="api-key-input" placeholder="Your rss2json.com API key (optional)" autocomplete="off" spellcheck="false">
+                <button class="btn btn-icon api-key-vis" id="apiKeyVis" title="Show/hide key">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+              <div class="api-key-actions">
+                <button class="btn btn-primary btn-sm" id="apiKeySave">Save</button>
+                <button class="btn btn-sm" id="apiKeyClear">Clear</button>
+                <span class="api-key-hint">
+                  <a href="https://rss2json.com" target="_blank" rel="noopener">Get a free key</a>
+                  · Works without a key (10 items/feed limit)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
