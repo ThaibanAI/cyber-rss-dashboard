@@ -10,7 +10,8 @@ A lightweight, static cybersecurity news aggregator that pulls RSS feeds from ma
 - **Categorized dashboard** — Filter by Threat Intelligence, Malware, Vulnerabilities, Government Alerts, or General Cyber News
 - **Dark & Light mode** — System-aware default with persistent preference toggle
 - **Instant search** — Full-text search across titles, descriptions, and source names (Ctrl+K to focus)
-- **Responsive design** — Desktop, tablet, and mobile
+- **Responsive design** — Desktop, tablet, mobile, and **wide-screen / landscape-optimised**
+- **Keyboard-aware** — Search & controls stay accessible when the virtual keyboard is open on mobile
 - **Bookmarks & Read Later** — LocalStorage-based, persists across sessions
 - **Feed health indicators** — See which sources loaded successfully
 - **Auto-refresh** — Refreshes feeds every 10 minutes

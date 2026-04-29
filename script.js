@@ -504,6 +504,53 @@ function toggleReadLater(url) {
 // ============================================================
 
 function attachEventListeners() {
+  // --- Virtual keyboard detection (mobile) ---
+  // Heuristic: on mobile, when an input is focused and viewport
+  // shrinks significantly, the keyboard is likely open.
+  let lastVisualHeight = window.innerHeight;
+
+  function detectKeyboard() {
+    const visualHeight = window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
+
+    // If height drops by > 100px on a mobile device, keyboard is open
+    if (visualHeight < lastVisualHeight - 100 && window.innerWidth < 769) {
+      document.body.classList.add('keyboard-open');
+    } else if (visualHeight >= lastVisualHeight - 20) {
+      document.body.classList.remove('keyboard-open');
+    }
+    lastVisualHeight = visualHeight;
+  }
+
+  // Use visualViewport API where available (iOS Safari + modern browsers)
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', detectKeyboard);
+  } else {
+    // Fallback: listen for resize on window
+    window.addEventListener('resize', detectKeyboard);
+  }
+
+  // Also detect via focus/blur on the search input directly
+  els.searchInput.addEventListener('focus', () => {
+    if (window.innerWidth < 769) {
+      // Give browser a tick to update the viewport before measuring
+      requestAnimationFrame(() => {
+        if (window.visualViewport &&
+            window.visualViewport.height < window.screen.height * 0.7) {
+          document.body.classList.add('keyboard-open');
+        }
+      });
+    }
+  });
+
+  els.searchInput.addEventListener('blur', () => {
+    // Short delay to let keyboard dismiss fully
+    setTimeout(() => {
+      document.body.classList.remove('keyboard-open');
+    }, 300);
+  });
+
   // Theme toggle
   els.themeToggle.addEventListener('click', toggleTheme);
 

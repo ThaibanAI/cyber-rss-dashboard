@@ -751,6 +751,138 @@ img { max-width: 100%; height: auto; }
   transition: all var(--transition);
 }
 
+/* ============================================================
+   WIDE-SCREEN / LANDSCAPE OPTIMISATIONS
+   ============================================================ */
+
+/* Large screens & landscape orientation */
+@media (min-width: 900px) and (orientation: landscape) {
+  .articles-container {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+}
+
+/* Extra-wide screens (desktop) */
+@media (min-width: 1400px) {
+  .articles-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+}
+
+/* Ultra-wide screens */
+@media (min-width: 1800px) {
+  :root {
+    --max-width: 1600px;
+  }
+  .articles-container {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+}
+
+/* Landscape on mobile/tablet (horizontal orientation phones) */
+@media (orientation: landscape) and (max-height: 500px) {
+  .header {
+    height: 52px;
+  }
+  .logo-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+  }
+  .logo-text h1 {
+    font-size: 1rem;
+  }
+  .logo-sub {
+    display: none;
+  }
+  .controls-inner {
+    padding: 8px 16px;
+    gap: 8px;
+  }
+  .search-input {
+    padding: 8px 36px 8px 36px;
+    font-size: 0.85rem;
+  }
+  .news-grid {
+    padding: 12px 16px 32px;
+  }
+  .articles-container {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .article-thumb,
+  .article-thumb-placeholder {
+    height: 100px;
+  }
+  .article-body {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .article-title {
+    font-size: 0.85rem;
+  }
+  .article-desc {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 2;
+  }
+  .article-meta, .article-footer {
+    font-size: 0.7rem;
+  }
+  .stats-bar {
+    padding: 4px 16px;
+    font-size: 0.7rem;
+  }
+  .footer {
+    padding: 12px 16px;
+  }
+}
+
+/* ============================================================
+   KEYBOARD-AWARE — pushes search/controls up when virtual
+   keyboard is open on mobile
+   ============================================================ */
+
+/* When the search input is focused, use visual viewport friendly heights */
+.search-input:focus,
+.source-select:focus-within {
+  /* Prevent iOS zoom on focus */
+  font-size: 16px;
+}
+
+/* Stick the controls to the top when keyboard is open on mobile */
+@media (max-width: 768px) {
+  body.keyboard-open .controls {
+    position: sticky;
+    top: 0;
+    z-index: 99;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  body.keyboard-open .header {
+    position: relative;
+  }
+  
+  body.keyboard-open .stats-bar {
+    display: none;
+  }
+  
+  body.keyboard-open .feed-alerts {
+    display: none;
+  }
+  
+  body.keyboard-open .footer {
+    display: none;
+  }
+  
+  body.keyboard-open .news-grid {
+    padding-bottom: 80px; /* Extra space so last card isn't behind keyboard */
+  }
+}
+
 /* --- Responsive --- */
 
 /* Tablet */
