@@ -504,42 +504,73 @@ function toggleReadLater(url) {
 // ============================================================
 
 function attachEventListeners() {
-  // --- Virtual keyboard detection (mobile) ---
-  // Heuristic: on mobile, when an input is focused and viewport
-  // shrinks significantly, the keyboard is likely open.
-  let lastVisualHeight = window.innerHeight;
+  // --- Virtual keyboard detection & push-up (mobile) ---
+  // Uses the Visual Viewport API to detect when the virtual keyboard
+  // opens and pushes the page content up by resizing a spacer element.
+  // This is far more reliable than CSS-based approaches on iOS/Safari.
 
-  function detectKeyboard() {
-    const visualHeight = window.visualViewport
-      ? window.visualViewport.height
-      : window.innerHeight;
+  const keyboardSpacer = document.getElementById('keyboardSpacer');
+  let lastKeyboardHeight = 0;
+  let initialViewportHeight = window.innerHeight;
 
-    // If height drops by > 100px on a mobile device, keyboard is open
-    if (visualHeight < lastVisualHeight - 100 && window.innerWidth < 769) {
-      document.body.classList.add('keyboard-open');
-    } else if (visualHeight >= lastVisualHeight - 20) {
+  function updateKeyboardState() {
+    if (!keyboardSpacer) return;
+
+    const vv = window.visualViewport;
+    const isMobile = window.innerWidth < 769;
+
+    // How much of the screen is the keyboard covering?
+    // visualViewport.offsetTop tells us how far from the top
+    // of the layout viewport the visual viewport is scrolled.
+    // On iOS, when keyboard opens, offsetTop grows as the visible
+    // area is pushed up, and height shrinks.
+    if (vv && isMobile) {
+      // The keyboard height = screen.height - visualViewport.height
+      // But also account for the URL bar offset on mobile Safari.
+      const visibleArea = vv.height;
+      const totalScreen = window.screen ? window.screen.height : window.innerHeight;
+      const keyboardHeight = Math.max(0, totalScreen - visibleArea - (vv.offsetTop || 0));
+
+      if (keyboardHeight > 80) {
+        // Keyboard is open
+        document.body.classList.add('keyboard-open');
+        keyboardSpacer.style.height = keyboardHeight + 'px';
+        lastKeyboardHeight = keyboardHeight;
+
+        // Force scroll to keep the focused element visible
+        if (document.activeElement &&
+            (document.activeElement.tagName === 'INPUT' ||
+             document.activeElement.tagName === 'TEXTAREA' ||
+             document.activeElement.tagName === 'SELECT')) {
+          // iOS Safari will already handle this if the input isn't
+          // hidden behind a fixed element. The spacer ensures
+          // page content stays accessible.
+        }
+      } else if (lastKeyboardHeight > 0) {
+        // Keyboard dismissed
+        document.body.classList.remove('keyboard-open');
+        keyboardSpacer.style.height = '0px';
+        lastKeyboardHeight = 0;
+      }
+    } else if (!isMobile) {
       document.body.classList.remove('keyboard-open');
+      if (keyboardSpacer) keyboardSpacer.style.height = '0px';
+      lastKeyboardHeight = 0;
     }
-    lastVisualHeight = visualHeight;
   }
 
   // Use visualViewport API where available (iOS Safari + modern browsers)
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', detectKeyboard);
-  } else {
-    // Fallback: listen for resize on window
-    window.addEventListener('resize', detectKeyboard);
+    window.visualViewport.addEventListener('resize', updateKeyboardState);
+    window.visualViewport.addEventListener('scroll', updateKeyboardState);
   }
 
-  // Also detect via focus/blur on the search input directly
+  // Also fallback: detect via focus/blur on the search input
   els.searchInput.addEventListener('focus', () => {
     if (window.innerWidth < 769) {
       // Give browser a tick to update the viewport before measuring
       requestAnimationFrame(() => {
-        if (window.visualViewport &&
-            window.visualViewport.height < window.screen.height * 0.7) {
-          document.body.classList.add('keyboard-open');
-        }
+        updateKeyboardState();
       });
     }
   });
@@ -547,9 +578,17 @@ function attachEventListeners() {
   els.searchInput.addEventListener('blur', () => {
     // Short delay to let keyboard dismiss fully
     setTimeout(() => {
-      document.body.classList.remove('keyboard-open');
+      updateKeyboardState();
     }, 300);
   });
+
+  // Handle window resize too (orientation change, split screen, etc.)
+  window.addEventListener('resize', () => {
+    updateKeyboardState();
+  });
+
+  // Initial measurement
+  initialViewportHeight = window.innerHeight;
 
   // Theme toggle
   els.themeToggle.addEventListener('click', toggleTheme);

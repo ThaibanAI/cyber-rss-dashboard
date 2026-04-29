@@ -10,8 +10,9 @@ A lightweight, static cybersecurity news aggregator that pulls RSS feeds from ma
 - **Categorized dashboard** — Filter by Threat Intelligence, Malware, Vulnerabilities, Government Alerts, or General Cyber News
 - **Dark & Light mode** — System-aware default with persistent preference toggle
 - **Instant search** — Full-text search across titles, descriptions, and source names (Ctrl+K to focus)
-- **Responsive design** — Desktop, tablet, mobile, and **wide-screen / landscape-optimised**
-- **Keyboard-aware** — Search & controls stay accessible when the virtual keyboard is open on mobile
+- **Responsive design** — Desktop, tablet, mobile, and **wide-screen / landscape-optimised** with fluid grid columns that adapt to screen width in landscape mode
+- **Keyboard-aware push-up** — When the virtual keyboard opens on mobile, content is pushed up above it using the Visual Viewport API; the search input stays visible and usable
+- **Wide-screen (landscape) optimised** — Column count adjusts from 1 → 2 → 3 → 4 based on available width, with compact card layouts for landscape phones
 - **Bookmarks & Read Later** — LocalStorage-based, persists across sessions
 - **Feed health indicators** — See which sources loaded successfully
 - **Auto-refresh** — Refreshes feeds every 10 minutes
@@ -118,8 +119,9 @@ cyber-rss-dashboard/
 
 - **No build step** — just HTML, CSS, and JS
 - **Lazy loading** — images load lazily
-- **Debounced search** — instant filtering without API calls
+- **Instant search** — filtering is done client-side, no API calls
 - **Local caching** — 5-minute localStorage cache to reduce API usage
+- **Visual Viewport API** — uses the browser's native viewport API for reliable keyboard detection (no hacks or polling)
 - **Minimal external requests** — only Font Awesome, Google Fonts, and the RSS API
 
 ## Future Ideas

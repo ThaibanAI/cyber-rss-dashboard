@@ -758,16 +758,26 @@ img { max-width: 100%; height: auto; }
 /* Large screens & landscape orientation */
 @media (min-width: 900px) and (orientation: landscape) {
   .articles-container {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
   }
 }
 
 /* Extra-wide screens (desktop) */
-@media (min-width: 1400px) {
+@media (min-width: 1200px) {
   .articles-container {
     grid-template-columns: repeat(3, 1fr);
     gap: 22px;
+  }
+  /* Landscape benefits from wider content on large screens */
+  .header-inner,
+  .controls-inner,
+  .stats-bar,
+  .feed-alerts,
+  .news-grid,
+  .footer-inner {
+    padding-left: 32px;
+    padding-right: 32px;
   }
 }
 
@@ -779,6 +789,25 @@ img { max-width: 100%; height: auto; }
   .articles-container {
     grid-template-columns: repeat(4, 1fr);
     gap: 24px;
+  }
+}
+
+/* Fluid landscape — adapts column count to viewport width for truly wide devices */
+@media (orientation: landscape) and (min-width: 1024px) {
+  .articles-container {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+/* Portrait tablets can show two columns comfortably sideways */
+@media (orientation: landscape) and (min-width: 600px) and (max-width: 1023px) {
+  .articles-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .article-thumb,
+  .article-thumb-placeholder {
+    height: 130px;
   }
 }
 
@@ -845,14 +874,21 @@ img { max-width: 100%; height: auto; }
    keyboard is open on mobile
    ============================================================ */
 
-/* When the search input is focused, use visual viewport friendly heights */
+/* Prevent iOS zoom on focus */
 .search-input:focus,
 .source-select:focus-within {
-  /* Prevent iOS zoom on focus */
   font-size: 16px;
 }
 
-/* Stick the controls to the top when keyboard is open on mobile */
+/* ============================================================
+   KEYBOARD-AWARE LAYOUT — pushes content above virtual keyboard
+   ============================================================ */
+
+/* The #keyboardSpacer element in HTML is resized by JS to match
+   the virtual keyboard height. This pushes everything above it. */
+
+/* When keyboard is open on mobile, ensure controls stick to top and
+   the spacer pushes footer out of the way */
 @media (max-width: 768px) {
   body.keyboard-open .controls {
     position: sticky;
@@ -863,7 +899,9 @@ img { max-width: 100%; height: auto; }
   }
   
   body.keyboard-open .header {
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
   
   body.keyboard-open .stats-bar {
@@ -878,8 +916,8 @@ img { max-width: 100%; height: auto; }
     display: none;
   }
   
-  body.keyboard-open .news-grid {
-    padding-bottom: 80px; /* Extra space so last card isn't behind keyboard */
+  body.keyboard-open #keyboardSpacer {
+    /* Height set dynamically by JS */
   }
 }
 

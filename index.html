@@ -16,6 +16,17 @@
         /* iOS already handles this with visual viewport */
       }
     }
+
+    /* Dynamic keyboard spacer — filled by JS via visualViewport */
+    #keyboardSpacer {
+      display: none;
+      width: 100%;
+      height: 0;
+      transition: height 0.15s ease;
+    }
+    body.keyboard-open #keyboardSpacer {
+      display: block;
+    }
   </style>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🛡️</text></svg>">
 </head>
@@ -121,7 +132,10 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer">
+    <!-- Keyboard spacer for mobile — JS adjusts height to push content above virtual keyboard -->
+  <div id="keyboardSpacer"></div>
+
+  <footer class="footer">
       <div class="footer-inner">
         <p>Cyber RSS Dashboard · <span id="footerYear"></span></p>
         <p class="footer-meta">Data sourced from public RSS feeds · Built for cybersecurity awareness</p>
