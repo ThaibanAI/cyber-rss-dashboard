@@ -1,6 +1,6 @@
-# 🛡️ Cyber RSS Dashboard
+# 🛡️ Vulnerability Radar
 
-A lightweight, static cybersecurity news aggregator that pulls RSS feeds from major cybersecurity sources into a clean, modern dashboard. Runs entirely in the browser — no backend required.
+A lightweight, static vulnerability dashboard that pulls RSS feeds from NVD, CISA, PortSwigger, and trusted security news sources into a clean triage view. Runs entirely in the browser — no backend required.
 
 ![Dark Mode Preview](./assets/images/preview-dark.png)
 

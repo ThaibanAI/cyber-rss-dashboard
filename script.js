@@ -4,7 +4,8 @@
 
 // --- Configuration ---
 const RSS_API = 'https://api.rss2json.com/v1/api.json';
-const DEFAULT_CATEGORY = 'All Feeds';
+const DEFAULT_CATEGORY = 'All Radar';
+const RADAR_LENSES = ['All Radar', 'Critical', 'High', 'Medium', 'Low', 'Exploited', 'Advisory', 'Research', 'News'];
 const STORAGE_KEYS = {
   THEME: 'cyber-rss-theme',
   BOOKMARKS: 'cyber-rss-bookmarks',
@@ -43,6 +44,9 @@ const els = {
   articleCount: $('#articleCount'),
   activeSources: $('#activeSources'),
   lastUpdated: $('#lastUpdated'),
+  criticalCount: $('#criticalCount'),
+  exploitedCount: $('#exploitedCount'),
+  cveCount: $('#cveCount'),
   feedAlerts: $('#feedAlerts'),
   footerYear: $('#footerYear'),
   apiKeyToggle: $('#apiKeyToggle'),
@@ -182,13 +186,15 @@ async function loadFeedConfig() {
 function getDefaultFeeds() {
   return {
     feeds: [
-      { id: 'krebs', name: 'Krebs on Security', url: 'https://krebsonsecurity.com/feed/', category: 'Threat Intelligence', logo: '', enabled: true },
-      { id: 'hackernews', name: 'The Hacker News', url: 'https://feeds.feedburner.com/TheHackersNews', category: 'Threat Intelligence', logo: '', enabled: true },
-      { id: 'darkreading', name: 'Dark Reading', url: 'https://www.darkreading.com/rss.xml', category: 'General Cyber News', logo: '', enabled: true },
-      { id: 'bleeping', name: 'BleepingComputer', url: 'https://www.bleepingcomputer.com/feed/', category: 'General Cyber News', logo: '', enabled: true },
-      { id: 'cisa', name: 'CISA Alerts', url: 'https://www.cisa.gov/cybersecurity-advisories/cybersecurity-advisories.xml', category: 'Government Alerts', logo: '', enabled: true },
+      { id: 'nvd', name: 'NVD - CVEs', url: 'https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss.xml', category: 'Advisory', logo: 'https://nvd.nist.gov/favicon.ico', enabled: true },
+      { id: 'cisa', name: 'CISA Alerts', url: 'https://www.cisa.gov/cybersecurity-advisories/cybersecurity-advisories.xml', category: 'Advisory', logo: 'https://www.cisa.gov/favicon.ico', enabled: true },
+      { id: 'portswigger', name: 'PortSwigger Research', url: 'https://portswigger.net/research/rss', category: 'Research', logo: 'https://portswigger.net/favicon.ico', enabled: true },
+      { id: 'bleeping', name: 'BleepingComputer', url: 'https://www.bleepingcomputer.com/feed/', category: 'News', logo: 'https://www.bleepingcomputer.com/favicon.ico', enabled: true },
+      { id: 'hackernews', name: 'The Hacker News', url: 'https://feeds.feedburner.com/TheHackersNews', category: 'News', logo: 'https://thehackernews.com/favicon.ico', enabled: true },
+      { id: 'krebs', name: 'Krebs on Security', url: 'https://krebsonsecurity.com/feed/', category: 'News', logo: 'https://krebsonsecurity.com/favicon.ico', enabled: true },
+      { id: 'schneier', name: 'Schneier on Security', url: 'https://www.schneier.com/feed/atom', category: 'Research', logo: 'https://www.schneier.com/favicon.ico', enabled: true },
     ],
-    categories: ['All Feeds', 'Threat Intelligence', 'Malware', 'Vulnerabilities', 'Government Alerts', 'General Cyber News'],
+    categories: RADAR_LENSES,
   };
 }
 
@@ -304,15 +310,19 @@ async function fetchFeed(feed) {
     const data = await res.json();
     if (data.status !== 'ok') throw new Error('API error: ' + (data.message || 'unknown'));
 
-    return (data.items || []).map(item => ({
-      title: item.title || 'Untitled',
-      link: item.link || '#',
-      pubDate: item.pubDate || new Date().toISOString(),
-      description: stripHtml(item.description || item.content || ''),
-      thumbnail: item.enclosure?.link || item.thumbnail || '',
-      author: item.author || '',
-      categories: item.categories || [],
-    })).filter(item => item.title !== 'Untitled' || item.link !== '#');
+    return (data.items || []).map(item => {
+      const article = {
+        title: item.title || 'Untitled',
+        link: item.link || '#',
+        pubDate: item.pubDate || new Date().toISOString(),
+        description: stripHtml(item.description || item.content || ''),
+        thumbnail: item.enclosure?.link || item.thumbnail || '',
+        author: item.author || '',
+        categories: item.categories || [],
+      };
+
+      return { ...article, ...deriveRadarSignals(article) };
+    }).filter(item => item.title !== 'Untitled' || item.link !== '#');
   } finally {
     clearTimeout(timeout);
   }
@@ -324,9 +334,60 @@ function stripHtml(html) {
   return div.textContent || div.innerText || '';
 }
 
-// ============================================================
-// CACHE
-// ============================================================
+function deriveRadarSignals(article) {
+  const text = `${article.title} ${article.description} ${article.author || ''}`.toLowerCase();
+  const cveIds = [...new Set((text.match(/cve-\d{4}-\d{4,7}/gi) || []).map(id => id.toUpperCase()))];
+  const exploited = /(known exploited|exploited|in the wild|zero[- ]day|active exploitation|weaponized|kev)/i.test(text);
+  const research = /(research|analysis|poc|proof of concept|exploit demo|project zero|portswigger|reverse engineering)/i.test(text);
+  const advisory = /(advisory|security update|patch Tuesday|patch tuesday|bulletin|release notes|vendor advisory|cve)/i.test(text);
+  const severity = detectSeverity(text);
+
+  const radarTags = new Set(['News']);
+  if (advisory) radarTags.add('Advisory');
+  if (research) radarTags.add('Research');
+  if (exploited) radarTags.add('Exploited');
+  if (severity !== 'Unknown') radarTags.add(severity);
+  if (cveIds.length) radarTags.add('Advisory');
+  if (/(critical|high|medium|low)/i.test(text)) radarTags.add('Advisory');
+
+  return {
+    _cveIds: cveIds,
+    _isExploited: exploited,
+    _severity: severity,
+    _radarTags: [...radarTags],
+  };
+}
+
+function detectSeverity(text) {
+  if (/\bcritical\b/i.test(text)) return 'Critical';
+  if (/\bhigh\b/i.test(text)) return 'High';
+  if (/\bmedium\b/i.test(text)) return 'Medium';
+  if (/\blow\b/i.test(text)) return 'Low';
+  return 'Unknown';
+}
+
+function buildRadarBadges(article) {
+  const badges = [];
+  if (article._severity && article._severity !== 'Unknown') {
+    badges.push(`<span class="badge severity ${article._severity.toLowerCase()}">${escapeHtml(article._severity)}</span>`);
+  }
+  if (article._isExploited) {
+    badges.push('<span class="badge exploit">Exploited</span>');
+  }
+  if (article._cveIds && article._cveIds.length) {
+    badges.push(`<span class="badge cve">${escapeHtml(article._cveIds[0])}</span>`);
+    if (article._cveIds.length > 1) {
+      badges.push(`<span class="badge cve-more">+${article._cveIds.length - 1} more</span>`);
+    }
+  }
+  if (article._radarTags.includes('Research')) {
+    badges.push('<span class="badge research">Research</span>');
+  }
+  if (article._radarTags.includes('Advisory')) {
+    badges.push('<span class="badge advisory">Advisory</span>');
+  }
+  return badges.join('');
+}
 
 function cacheData(articles) {
   const cache = { timestamp: Date.now(), articles };
@@ -354,9 +415,9 @@ function getCachedData() {
 function applyFilters() {
   let result = [...allArticles];
 
-  // Category filter
+  // Radar lens filter
   if (activeCategory !== DEFAULT_CATEGORY) {
-    result = result.filter(a => a._sourceCategory === activeCategory);
+    result = result.filter(article => article._radarTags.includes(activeCategory));
   }
 
   // Source filter
@@ -370,7 +431,8 @@ function applyFilters() {
     result = result.filter(a =>
       a.title.toLowerCase().includes(q) ||
       a.description.toLowerCase().includes(q) ||
-      a._sourceName.toLowerCase().includes(q)
+      a._sourceName.toLowerCase().includes(q) ||
+      a._cveIds.join(' ').toLowerCase().includes(q)
     );
   }
 
@@ -402,6 +464,7 @@ function renderArticles() {
     const isBookmarked = bookmarks.includes(article.link);
     const isReadLater = readLater.includes(article.link);
     const dateStr = formatDate(article.pubDate);
+    const badgeHtml = buildRadarBadges(article);
 
     return `
       <article class="article-card" style="animation-delay:${Math.min(idx * 30, 300)}ms">
@@ -415,6 +478,7 @@ function renderArticles() {
             </span>
             <span class="article-date">${dateStr}</span>
           </div>
+          <div class="article-badges">${badgeHtml}</div>
           <h3 class="article-title">${escapeHtml(article.title)}</h3>
           <p class="article-desc">${escapeHtml(truncate(article.description, 200))}</p>
           <div class="article-footer">
@@ -455,14 +519,21 @@ function renderFeedAlerts(alerts) {
 
 function updateStats() {
   const enabled = feedsConfig.feeds.filter(f => f.enabled);
-  els.articleCount.textContent = `${allArticles.length} article${allArticles.length !== 1 ? 's' : ''}`;
+  const criticalHigh = allArticles.filter(a => ['Critical', 'High'].includes(a._severity)).length;
+  const exploited = allArticles.filter(a => a._isExploited).length;
+  const cves = allArticles.filter(a => a._cveIds && a._cveIds.length > 0).length;
+
+  els.articleCount.textContent = `${allArticles.length} alert${allArticles.length !== 1 ? 's' : ''}`;
   els.activeSources.textContent = `${enabled.length} source${enabled.length !== 1 ? 's' : ''}`;
+  if (els.criticalCount) els.criticalCount.textContent = String(criticalHigh);
+  if (els.exploitedCount) els.exploitedCount.textContent = String(exploited);
+  if (els.cveCount) els.cveCount.textContent = String(cves);
 }
 
 function updateLastUpdated() {
   const now = new Date();
   const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  els.lastUpdated.textContent = `Updated ${time}`;
+  els.lastUpdated.textContent = `Radar refreshed ${time}`;
 }
 
 // ============================================================

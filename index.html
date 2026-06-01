@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-  <title>Cyber RSS Dashboard</title>
+  <title>Vulnerability Radar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@
             <i class="fas fa-shield-halved"></i>
           </div>
           <div class="logo-text">
-            <h1>Cyber RSS</h1>
+            <h1>Vuln Radar</h1>
             <span class="logo-sub">Dashboard</span>
           </div>
         </div>
@@ -101,6 +101,32 @@
       </div>
     </section>
 
+    <!-- Radar Hero -->
+    <section class="radar-hero">
+      <div class="radar-copy">
+        <p class="radar-eyebrow">Vulnerability radar</p>
+        <h2>Track exploited CVEs, high-risk advisories, and vendor patches in one live view.</h2>
+        <p>
+          Prioritize what matters using sources like NVD, CISA, PortSwigger, and trusted security news.
+          The radar highlights CVE hits, exploit signals, and severity keywords so you can scan fast.
+        </p>
+      </div>
+      <div class="radar-metrics">
+        <div class="radar-metric">
+          <span id="criticalCount">0</span>
+          <label>Critical / High</label>
+        </div>
+        <div class="radar-metric">
+          <span id="exploitedCount">0</span>
+          <label>Exploited</label>
+        </div>
+        <div class="radar-metric">
+          <span id="cveCount">0</span>
+          <label>CVE hits</label>
+        </div>
+      </div>
+    </section>
+
     <!-- Stats bar -->
     <section class="stats-bar" id="statsBar">
       <span id="articleCount">0 articles</span>
@@ -136,11 +162,11 @@
   <div id="keyboardSpacer"></div>
 
   <footer class="footer">
-      <div class="footer-inner">
-        <p>Cyber RSS Dashboard · <span id="footerYear"></span></p>
-        <p class="footer-meta">Data sourced from public RSS feeds · Built for cybersecurity awareness</p>
-      </div>
-    </footer>
+    <div class="footer-inner">
+      <p>Vulnerability Radar · <span id="footerYear"></span></p>
+      <p class="footer-meta">Public vulnerability and security feeds · Built for fast triage</p>
+    </div>
+  </footer>
   </div>
 
   <script src="script.js"></script>
